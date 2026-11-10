@@ -18,7 +18,6 @@ export function useWidth<T extends HTMLElement>(): [React.RefObject<T | null>, n
   return [ref, width];
 }
 
-const niceTicks = (lo: number, hi: number, count: number) => scaleLinear().domain([lo, hi]).nice(count).ticks(count);
 const isDay = (t: string) => t.length === 10;
 const label = (t: string) => (isDay(t) ? dayShort(t) : timeOnly(t));
 
@@ -48,9 +47,10 @@ export function LineChart(props: { series: Series[]; height?: number; format?: (
   if (props.zeroBased) lo = Math.min(0, lo);
   if (lo === hi) { lo -= 1; hi += 1; }
   const pad = (hi - lo) * 0.08;
-  const y = scaleLinear().domain([props.zeroBased ? lo : lo - pad, hi + pad]).range([height - m.b, m.t]);
+  // Round the domain outward to tick values so no gridline or label falls outside the plot.
+  const y = scaleLinear().domain([props.zeroBased ? lo : lo - pad, hi + pad]).nice(4).range([height - m.b, m.t]);
   const x = scaleLinear().domain([0, Math.max(1, xs.length - 1)]).range([m.l, Math.max(m.l + 1, width - m.r)]);
-  const ticks = niceTicks(y.domain()[0]!, y.domain()[1]!, 4);
+  const ticks = y.ticks(4);
   const xTickCount = Math.max(2, Math.min(7, Math.floor(width / 90)));
   const xTicks = xs.length <= xTickCount ? xs.map((_, i) => i) : Array.from({ length: xTickCount }, (_, i) => Math.round((i * (xs.length - 1)) / (xTickCount - 1)));
   const path = line<{ t: string; v: number }>().x((p) => x(index.get(p.t)!)).y((p) => y(p.v)).curve(curveMonotoneX);
@@ -152,11 +152,11 @@ export function PriceChart(props: { candles: Candle[]; mode: 'line' | 'candles';
   const lo = props.mode === 'candles' ? min(c, (d) => d.l)! : min(closes)!;
   const hi = props.mode === 'candles' ? max(c, (d) => d.h)! : max(closes)!;
   const pad = (hi - lo || 1) * 0.07;
-  const y = scaleLinear().domain([lo - pad, hi + pad]).range([m.t + plotH, m.t]);
+  const y = scaleLinear().domain([lo - pad, hi + pad]).nice(5).range([m.t + plotH, m.t]);
   const band = scaleBand<number>().domain(c.map((_, i) => i)).range([m.l, Math.max(m.l + 1, width - m.r)]).paddingInner(0.3);
   const cx = (i: number) => band(i)! + band.bandwidth() / 2;
   const vy = scaleLinear().domain([0, max(c, (d) => d.v ?? 0) || 1]).range([H - m.b, H - m.b - volH + 6]);
-  const ticks = niceTicks(y.domain()[0]!, y.domain()[1]!, 5);
+  const ticks = y.ticks(5);
   const xTickCount = Math.max(2, Math.min(8, Math.floor(width / 100)));
   const xTicks = Array.from({ length: xTickCount }, (_, i) => Math.round((i * (c.length - 1)) / (xTickCount - 1)));
   const up = closes.at(-1)! >= closes[0]!;
@@ -285,7 +285,7 @@ export function BarChart(props: { data: { key: string; label: string; value: num
           {props.reference && (
             <g>
               <line x1={m.l} x2={width - m.r} y1={y(props.reference.value)} y2={y(props.reference.value)} stroke="var(--ink-2)" strokeDasharray="4 4" />
-              <text x={width - m.r} y={y(props.reference.value) - 5} textAnchor="end" style={{ fill: 'var(--ink-2)' }}>{props.reference.label}</text>
+              <text x={width - m.r} y={y(props.reference.value) - 6} textAnchor="end" style={{ fill: 'var(--ink)', paintOrder: 'stroke', stroke: 'var(--hull)', strokeWidth: 5, strokeLinejoin: 'round' }}>{props.reference.label}</text>
             </g>
           )}
         </svg>
@@ -363,7 +363,7 @@ export function CorrelationMatrix(props: { symbols: string[]; matrix: (number | 
           <div className="hd" style={{ justifyItems: 'start' }}>{row}</div>
           {props.matrix[i]!.map((v, j) => (
             <div key={j} role="cell" style={{ background: color(v), color: '#fff', fontWeight: 550 }} title={`${row} vs ${props.symbols[j]}: ${v === null ? 'n/a' : v.toFixed(2)}`}>
-              {v === null ? '–' : v.toFixed(2)}
+              {v === null ? '–' : v.toFixed(2).replace('-', '−')}
             </div>
           ))}
         </div>

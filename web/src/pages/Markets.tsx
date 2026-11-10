@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ChartNote, CorrelationMatrix, HBars, LineChart, PriceChart } from '../charts/charts.tsx';
-import { api, type Company, type Note, type RangeKey, todayLocal } from '../lib/api.ts';
+import { api, ApiError, type Company, type Note, type RangeKey, todayLocal } from '../lib/api.ts';
 import { ago, dateTime, day, money, num, pct, price, share, signed, tone } from '../lib/format.ts';
 import { useAct, useBoard, useCompany, useHistory, useNotes, usePortfolio, usePortfolioRisk, useSymbolSearch, useTransactions, useWatchlist } from '../lib/queries.ts';
 import { ConfirmButton, Empty, ErrorBox, Field, Freshness, Icon, Load, Modal, Panel, Seg, Skeleton, Stat } from '../ui/kit.tsx';
@@ -225,7 +225,13 @@ function Instrument({ symbol }: { symbol: string }) {
   const toggleSma = (w: number) => setSmas((s) => (s.includes(w) ? s.filter((x) => x !== w) : [...s, w].sort((a, b) => a - b)));
 
   if (company.isError && !company.data) {
-    return <Panel><Empty title={`No data for “${symbol}”`} icon={Icon.alert} action={<Link className="btn" to="/markets">Back to markets</Link>}>{company.error.message}. Check the ticker; symbols follow Yahoo Finance conventions, for example VOD.L, ^GSPC or EURUSD=X.</Empty></Panel>;
+    // An unknown ticker and a provider outage are different problems with different fixes.
+    const unknown = company.error instanceof ApiError && company.error.status === 404;
+    return unknown ? (
+      <Panel><Empty title={`No data for “${symbol}”`} icon={Icon.alert} action={<Link className="btn" to="/markets">Back to markets</Link>}>{company.error.message}. Check the ticker; symbols follow Yahoo Finance conventions, for example VOD.L, ^GSPC or EURUSD=X.</Empty></Panel>
+    ) : (
+      <Panel title={symbol}><ErrorBox what="Market data is unavailable right now" error={company.error} retry={() => void company.refetch()} /><p className="small faint" style={{ marginTop: 10 }}>No price is shown because none could be retrieved and nothing is cached for this instrument.</p></Panel>
+    );
   }
   const c = company.data;
   const q = c?.quote?.quote;
@@ -488,7 +494,7 @@ export default function Markets() {
   const tab = symbol ? '' : TABS.some((t) => t.id === params.get('tab')) ? params.get('tab')! : 'overview';
   return (
     <div className="reveal">
-      <div className="row" style={{ alignItems: 'flex-start', gap: 12, position: 'relative', zIndex: 6 }}>
+      <div className="desk-head">
         <div className="tabs grow" role="tablist">
           {TABS.map((t) => <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => navigate(t.id === 'overview' ? '/markets' : `/markets?tab=${t.id}`)}>{t.label}</button>)}
         </div>

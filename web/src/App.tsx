@@ -1,7 +1,7 @@
 import { Component, lazy, type ReactNode, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ago } from './lib/format.ts';
-import { useNewsMeta, useStatus, useSymbolSearch } from './lib/queries.ts';
+import { useBoard, useNewsMeta, useStatus, useSymbolSearch } from './lib/queries.ts';
 import { Empty, ErrorBox, Icon, Modal, Skeleton } from './ui/kit.tsx';
 
 const Situation = lazy(() => import('./pages/Situation.tsx'));
@@ -37,6 +37,10 @@ function Clock() {
 
 function SystemStatus() {
   const { data, isError } = useStatus();
+  // Market health is observed, not assumed: it reflects the last board fetch.
+  const board = useBoard();
+  const priced = board.data?.filter((b) => b.quote) ?? [];
+  const market = board.isPending ? { dot: 'off', text: 'checking' } : board.isError || priced.length === 0 ? { dot: 'bad', text: 'unreachable' } : priced.some((b) => b.stale) ? { dot: 'warn', text: 'stale' } : priced.length < (board.data?.length ?? 0) ? { dot: 'warn', text: 'partial' } : { dot: 'ok', text: 'delayed' };
   if (isError) return <div className="rail-foot"><div className="feed-row"><span className="dot bad" /><span>Server unreachable</span></div></div>;
   if (!data) return <div className="rail-foot"><Skeleton rows={3} pad={false} /></div>;
   const n = data.news;
@@ -47,7 +51,7 @@ function SystemStatus() {
         <span className={`dot ${newsState}`} /><span>News feeds</span><span>{n.lastIngestAt ? ago(n.lastIngestAt) : 'no data'}</span>
       </Link>
       <div className="feed-row" title="Prices come from public delayed feeds, never real-time">
-        <span className="dot ok" /><span>Market data</span><span>delayed</span>
+        <span className={`dot ${market.dot}`} /><span>Market data</span><span>{market.text}</span>
       </div>
       <Link to="/analyst" className="feed-row" style={{ color: 'inherit' }} title={data.analyst.model ?? 'Set ANTHROPIC_API_KEY to enable'}>
         <span className={`dot ${data.analyst.configured ? 'ok' : 'off'}`} /><span>AI analyst</span><span>{data.analyst.configured ? 'ready' : 'no key'}</span>

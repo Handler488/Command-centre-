@@ -319,13 +319,13 @@ function ObjectiveCard({ o }: { o: Objective }) {
         </div>
         <div className="bar-track" style={{ height: 8 }} role="progressbar" aria-valuenow={Math.round(o.progress * 100)} aria-valuemin={0} aria-valuemax={100} aria-label={`${o.title} progress`}>
           <div className="bar-fill" style={{ width: `${o.progress * 100}%`, background: o.pace === 'behind' || o.pace === 'overdue' ? 'var(--warn)' : o.progress >= 1 ? 'var(--up)' : 'var(--s1)' }} />
-          {o.expected !== null && o.progress < 1 && <div className="bar-mark" style={{ left: `calc(${o.expected * 100}% - 1px)` }} title="Where you would be if progress were even" />}
+          {o.expected !== null && o.expected >= 0.01 && o.progress < 1 && <div className="bar-mark" style={{ left: `calc(${o.expected * 100}% - 1px)` }} title="Where you would be if progress were even" />}
         </div>
-        {o.expected !== null && o.progress < 1 && <p className="small faint">The marker shows even progress to date: {Math.round(o.expected * 100)}%.</p>}
+        {o.expected !== null && o.expected >= 0.01 && o.progress < 1 && <p className="small faint">The marker shows even progress to date: {Math.round(o.expected * 100)}%.</p>}
         {points.length > 1 && <LineChart ariaLabel={`${o.title} progress history`} height={120} format={(v) => num(v, 0)} series={[{ name: o.unit || 'Value', color: 'var(--s1)', points }]} />}
         {o.status === 'active' ? (
           <form className="row wrap" onSubmit={(e) => { e.preventDefault(); if (value !== '') log.mutate(undefined); }}>
-            <input className="input" style={{ width: 120 }} type="number" step="any" placeholder={`New value${o.unit ? `, ${o.unit}` : ''}`} value={value} onChange={(e) => setValue(e.target.value)} aria-label="New value" required />
+            <input className="input" style={{ width: 130 }} type="number" step="any" placeholder="New value" value={value} onChange={(e) => setValue(e.target.value)} aria-label="New value" required />
             <input className="input grow" style={{ width: 'auto', minWidth: 120 }} placeholder="Note (optional)" value={note} onChange={(e) => setNote(e.target.value)} maxLength={300} aria-label="Note" />
             <button className="btn" disabled={log.isPending}>Record progress</button>
             <button type="button" className="btn ghost sm" onClick={() => status.mutate('dropped')}>Drop</button>

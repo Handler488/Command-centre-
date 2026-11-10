@@ -99,6 +99,10 @@ kbd { font: 500 10.5px/1 var(--sans); color: var(--ink-3); border: 1px solid var
 .content { flex: 1; min-height: 0; overflow: auto; padding: 16px 20px 40px; }
 .tabbar { display: none; }
 
+/* Tabs with a tool beside them; raised so dropdowns clear the panels below. */
+.desk-head { display: flex; align-items: flex-start; gap: 12px; position: relative; z-index: 6; }
+.desk-head .tabs { flex: 1; min-width: 0; }
+
 /* ---------- layout helpers ---------- */
 .grid { display: grid; gap: 14px; }
 .cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -269,7 +273,7 @@ button.chip:hover { color: var(--ink); background: var(--line); }
 .story:hover { background: var(--hull-2); }
 .story[aria-current='true'] { background: var(--hull-2); box-shadow: inset 3px 0 0 var(--amber); }
 .score { width: 44px; height: 44px; display: grid; place-items: center; position: relative; font: 650 14px/1 var(--sans); }
-.score svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.score svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
 .story-meta { display: flex; flex-wrap: wrap; gap: 5px 8px; align-items: center; margin-top: 7px; font-size: 12px; color: var(--ink-3); }
 .wire-item { padding: 11px 14px; border-bottom: 1px solid var(--line-soft); display: grid; gap: 4px; }
 .wire-item:last-child { border-bottom: 0; }
@@ -399,6 +403,8 @@ button.chip:hover { color: var(--ink); background: var(--line); }
   .scrim { padding-top: 4vh; }
   .table th, .table td { padding: 8px 10px; }
   .hide-sm { display: none !important; }
+  .desk-head { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
+  .desk-head form { width: 100% !important; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }

@@ -4,7 +4,7 @@ const NF = { 0: nf(0, 0), 1: nf(1, 1), 2: nf(2, 2), 4: nf(4, 4) } as const;
 export const DASH = '–';
 
 export function num(n: number | null | undefined, dp: 0 | 1 | 2 | 4 = 2): string {
-  return n == null || !Number.isFinite(n) ? DASH : NF[dp].format(n);
+  return n == null || !Number.isFinite(n) ? DASH : `${n < 0 ? '−' : ''}${NF[dp].format(Math.abs(n))}`;
 }
 
 /** Prices: more decimals for small values such as FX rates. */
@@ -20,7 +20,7 @@ export function signed(n: number | null | undefined, dp: 0 | 1 | 2 = 2, suffix =
 
 export const pct = (n: number | null | undefined, dp: 0 | 1 | 2 = 2) => signed(n, dp, '%');
 /** Fraction (0.123) to "12.3%". */
-export const share = (n: number | null | undefined, dp: 0 | 1 | 2 = 1) => (n == null || !Number.isFinite(n) ? DASH : `${NF[dp].format(n * 100)}%`);
+export const share = (n: number | null | undefined, dp: 0 | 1 | 2 = 1) => (n == null || !Number.isFinite(n) ? DASH : `${n < 0 ? '−' : ''}${NF[dp].format(Math.abs(n) * 100)}%`);
 
 export function money(n: number | null | undefined, opts: { compact?: boolean; sign?: boolean; currency?: string } = {}): string {
   if (n == null || !Number.isFinite(n)) return DASH;

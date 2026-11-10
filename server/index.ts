@@ -5,8 +5,8 @@ import { openDatabase } from './db.ts';
 const db = openDatabase(config.databasePath);
 const { app, news, cache } = createPlatform(db);
 
-const server = app.listen(config.port, () => {
-  console.log(`Command Centre API listening on http://localhost:${config.port}`);
+const server = app.listen(config.port, config.host, () => {
+  console.log(`Command Centre listening on http://${config.host === '0.0.0.0' ? 'localhost' : config.host}:${config.port}`);
   console.log(`  database: ${config.databasePath}`);
   console.log(`  AI analyst: ${config.anthropicApiKey ? `enabled (${config.analystModel})` : 'disabled (no ANTHROPIC_API_KEY)'}`);
 });

@@ -137,7 +137,7 @@ describe('markets', () => {
     const intraday = (await api.get('/api/markets/history/AAPL?range=1D').expect(200)).body;
     expect(intraday.candles[0].t).toMatch(/T/);
     await api.get('/api/markets/history/AAPL?range=10Y').expect(400);
-    await api.get('/api/markets/history/NOPE').expect(502);
+    await api.get('/api/markets/history/NOPE').expect(404);
   });
 
   it('falls back to Stooq end-of-day data when the primary provider is down', async () => {
@@ -174,7 +174,7 @@ describe('markets', () => {
     expect((await api.get('/api/markets/watchlist').expect(200)).body).toEqual([]);
     await api.post('/api/markets/watchlist').send({ symbol: 'nvda' }).expect(201);
     await api.post('/api/markets/watchlist').send({ symbol: 'NVDA' }).expect(409);
-    await api.post('/api/markets/watchlist').send({ symbol: 'NOPE' }).expect(502);
+    await api.post('/api/markets/watchlist').send({ symbol: 'NOPE' }).expect(404);
     const list = (await api.get('/api/markets/watchlist')).body;
     expect(list).toHaveLength(1);
     expect(list[0]).toMatchObject({ symbol: 'NVDA', name: 'NVIDIA Corporation' });
@@ -449,6 +449,9 @@ describe('platform behaviour', () => {
       await expect(p.markets.quote('NVDA')).resolves.toBeTruthy(); // still cached and fresh
       db.prepare("DELETE FROM kv_cache WHERE key = 'quote:NVDA'").run();
       await expect(p.markets.quote('NVDA')).rejects.toThrow(/Yahoo Finance/);
+      // An outage is a 502, distinct from the 404 an unknown ticker gets.
+      const down = await api.get('/api/markets/company/NVDA').expect(502);
+      expect(down.body.error.code).toBe('upstream_unavailable');
     } finally {
       config.upstream.yahooChart = original;
     }

@@ -14,6 +14,8 @@ function int(name: string, fallback: number): number {
  */
 export const config = {
   port: int('PORT', 4000),
+  /** Loopback by default: this is a single-user tool holding personal data, with no login. */
+  host: process.env.HOST?.trim() || '127.0.0.1',
   env: process.env.NODE_ENV ?? 'development',
   databasePath: path.resolve(process.env.DATABASE_PATH ?? './data/command-centre.db'),
   newsRefreshMinutes: int('NEWS_REFRESH_MINUTES', 15),

@@ -14,7 +14,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p web/tsconfig.json --noEmit",
     "test": "vitest run",
     "test:e2e": "node tests/e2e/run.mjs",
-    "seed:demo": "tsx scripts/seed-demo.ts"
+    "check": "npm run typecheck && npm test && npm run build && npm run test:e2e"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.7.0",
