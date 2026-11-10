@@ -18,6 +18,8 @@ export interface AgentResult {
   newMessages: BetaMessageParam[];
   model: string;
   stopReason: string | null;
+  /** True when the model declined; the turn should not be stored as conversation history. */
+  refused: boolean;
 }
 
 const MAX_TURNS = 8;
@@ -179,8 +181,15 @@ export async function runAnalyst(opts: {
     throw errorMessage(err);
   }
 
-  // Only list sources the answer could have drawn on; order by first use.
+  // If the step limit cut the loop off after tool results, close the turn so the
+  // stored history stays well-formed and whatever was written is kept.
+  if (newMessages.at(-1)?.role === 'user' && newMessages.length > 1) {
+    if (!text.trim()) text = 'I could not finish the research within the step limit. Try a narrower question.';
+    newMessages.push({ role: 'assistant', content: [{ type: 'text', text: text.trim() }] });
+  }
+
+  // Sources surfaced by the tools during this turn, in order of first use.
   const used = [...sources.values()];
   opts.emit({ type: 'sources', sources: used });
-  return { text: text.trim(), sources: used, newMessages, model, stopReason };
+  return { text: text.trim(), sources: used, newMessages, model, stopReason, refused: stopReason === 'refusal' };
 }

@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { type DB, nowIso, transaction } from '../../db.ts';
 import { AppError, badRequest, notFound } from '../../lib/errors.ts';
 import { fetchText, mapLimit } from '../../lib/http.ts';
@@ -86,7 +87,7 @@ export class NewsService {
       throw badRequest('Feed URL is not a valid URL');
     }
     if (!/^https?:$/.test(parsed.protocol)) throw badRequest('Feed URL must be http(s)');
-    const id = `custom-${Date.now().toString(36)}`;
+    const id = `custom-${randomUUID().slice(0, 8)}`;
     try {
       this.db
         .prepare('INSERT INTO news_sources (id, name, url, homepage, region, enabled, builtin) VALUES (?, ?, ?, ?, NULL, 1, 0)')

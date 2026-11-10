@@ -367,7 +367,11 @@ describe('AI analyst', () => {
 
   it('surfaces refusals and validates input', async () => {
     const res = await api.post('/api/analyst/chat').send({ text: 'REFUSE this' }).expect(200);
-    expect(events(res.text).find((e) => e.type === 'notice').message).toMatch(/declined/);
+    const refused = events(res.text);
+    expect(refused.find((e) => e.type === 'notice').message).toMatch(/declined/);
+    // Declined turns are reported but never written into conversation history.
+    expect(refused.some((e) => e.type === 'conversation')).toBe(false);
+    expect((await api.get('/api/analyst/conversations')).body.every((c: any) => !/REFUSE/.test(c.title))).toBe(true);
     await api.post('/api/analyst/chat').send({ text: '' }).expect(400);
     const missing = await api.post('/api/analyst/chat').send({ conversationId: 9999, text: 'hi' }).expect(200);
     expect(events(missing.text)[0]).toMatchObject({ type: 'error', code: 'not_found' });

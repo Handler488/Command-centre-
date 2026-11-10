@@ -68,6 +68,9 @@ export class AnalystService {
         opts.emit(e);
       },
     });
+    // A declined request is shown to the user but not stored: keeping it would
+    // leave an unanswered turn in the history sent with every later question.
+    if (result.refused) return { conversationId: conversationId ?? null };
     const now = nowIso();
     transaction(this.db, () => {
       if (!conversationId) {
